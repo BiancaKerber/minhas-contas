@@ -47,7 +47,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:8px;margin-top:6px;border-top:1px solid rgba(0,0,0,0.07)}
 .footer-label{font-size:12px;color:#888}
-.add-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:#aaa;cursor:pointer;padding:6px 0;border:none;background:none;margin-top:4px}
+.add-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:#aaa;cursor:pointer;padding:6px 0;border:none;background:none;margin-top:4px;font-family:inherit}
 .add-btn:hover{color:#1a1a1a}
 .add-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;padding:1rem}
@@ -68,13 +68,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .receita-item{background:#f5f4f0;border-radius:8px;padding:.6rem .85rem;position:relative}
 .receita-nome{font-size:11px;color:#888}
 .receita-valor{font-size:14px;font-weight:500;color:#1d9e75}
-.receita-del{position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:2px;display:flex;align-items:center}
+.receita-del{position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;color:#ccc;padding:2px;display:flex;align-items:center}
 .receita-del:hover{color:#c0392b}
 .receita-del svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
-.mes-header{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem}
+.mes-header{display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
 .mes-select{font-size:16px;font-weight:500;background:none;border:none;color:#1a1a1a;cursor:pointer;padding:0;font-family:inherit}
 .add-mes-btn{font-size:12px;padding:4px 10px;border:0.5px solid rgba(0,0,0,0.15);border-radius:6px;background:#fff;cursor:pointer;font-family:inherit}
-.status-save{font-size:11px;color:#bbb;margin-left:auto}
+.status-save{font-size:11px;color:#bbb}
+.backup-area{display:flex;gap:6px;margin-left:auto;align-items:center}
+.btn-backup{display:flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:inherit;border:none;font-weight:500}
+.btn-export{background:#e8f4ee;color:#1d9e75}
+.btn-export:hover{background:#d4eddf}
+.btn-import{background:#eef2fc;color:#185fa5}
+.btn-import:hover{background:#dde6f9}
+.btn-backup svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:13px;padding:10px 18px;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200}
+.toast.show{opacity:1}
 </style>
 </head>
 <body>
@@ -83,10 +92,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <select class="mes-select" id="mes-select" onchange="changeMes()"></select>
     <button class="add-mes-btn" onclick="addMes()">+ Mês</button>
     <span class="status-save" id="status-save"></span>
+    <div class="backup-area">
+      <button class="btn-backup btn-export" onclick="exportar()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar
+      </button>
+      <button class="btn-backup btn-import" onclick="document.getElementById('import-input').click()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Importar
+      </button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importar(event)">
+    </div>
   </div>
   <div id="metrics-container" class="metrics"></div>
   <div id="sections-container"></div>
 </div>
+
+<div id="toast" class="toast"></div>
 
 <div id="modal-overlay" class="modal-overlay" onclick="overlayClick(event)">
   <div class="modal">
@@ -182,6 +204,46 @@ let modalMode='',modalSec='',editTarget=null,nextId=200;
 const fmt=v=>'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 const mesLabel=k=>{const[y,m]=k.split('-');const n=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return n[parseInt(m)-1]+'/'+y.slice(2);};
 
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+function exportar(){
+  const data=JSON.stringify(state,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const hoje=new Date();
+  const nome=`minhas-contas-backup-${hoje.getFullYear()}${String(hoje.getMonth()+1).padStart(2,'0')}${String(hoje.getDate()).padStart(2,'0')}.json`;
+  a.href=url;a.download=nome;a.click();
+  URL.revokeObjectURL(url);
+  toast('Backup exportado!');
+}
+
+function importar(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(!imported.meses||!imported.mesAtual)throw new Error('Arquivo inválido');
+      if(!confirm('Isso vai substituir todos os dados atuais. Confirma?')){event.target.value='';return;}
+      state=imported;
+      const ids=Object.values(state.meses).flatMap(m=>Object.values(m.secoes).flat().map(i=>i.id).concat(m.receitas.map(r=>r.id)));
+      nextId=Math.max(nextId,...ids.filter(Number.isFinite))+1;
+      save();renderMesSelect();render();
+      toast('Dados importados com sucesso!');
+    }catch(err){
+      toast('Arquivo inválido. Use um backup exportado pelo app.');
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
 function avancaParcela(p){
   if(!p)return p;
   const m=p.match(/^(\d+)\/(\d+)$/);
@@ -198,7 +260,7 @@ function load(){
       state=JSON.parse(raw);
       const ids=Object.values(state.meses).flatMap(m=>Object.values(m.secoes).flat().map(i=>i.id).concat(m.receitas.map(r=>r.id)));
       nextId=Math.max(nextId,...ids.filter(Number.isFinite))+1;
-    } else {
+    }else{
       state.meses['2026-07']=JSON.parse(JSON.stringify(DEFAULT_DATA));
       state.mesAtual='2026-07';
     }
