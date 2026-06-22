@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minhas Contas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh;padding:1.5rem 1rem}
+.container{max-width:720px;margin:0 auto}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem}
+.metric{background:#fff;border-radius:10px;padding:.85rem 1rem;border:0.5px solid rgba(0,0,0,0.08)}
+.metric-label{font-size:12px;color:#888;margin-bottom:4px}
+.metric-value{font-size:19px;font-weight:500}
+.mv-danger{color:#c0392b}.mv-amor{color:#7c3aed}.mv-success{color:#1d9e75}
+.saldo-bar{margin-top:6px;height:6px;border-radius:3px;background:#e8e6e0;overflow:hidden}
+.saldo-fill{height:100%;border-radius:3px;background:#1d9e75}
+.saldo-fill.over{background:#c0392b}
+.card{background:#fff;border:0.5px solid rgba(0,0,0,0.08);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.card-title{font-size:13px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.05em}
+.card-totals{display:flex;gap:12px;font-size:13px;font-weight:500}
+.col-headers{display:grid;grid-template-columns:28px 1fr 78px 68px 68px 72px;gap:6px;padding-bottom:5px;border-bottom:0.5px solid rgba(0,0,0,0.08);margin-bottom:2px}
+.col-h{font-size:11px;color:#aaa;text-align:right}
+.col-h:first-child,.col-h:nth-child(2){text-align:left}
+.item-row{display:grid;grid-template-columns:28px 1fr 78px 68px 68px 72px;gap:6px;align-items:center;padding:5px 0;border-bottom:0.5px solid rgba(0,0,0,0.06)}
+.item-row:last-child{border-bottom:none}
+.item-row.pago .item-nome{text-decoration:line-through;color:#bbb}
+.item-row.pago .item-parcela{opacity:.4}
+.item-row.pago .v-total,.item-row.pago .v-meu,.item-row.pago .v-amor{opacity:.35}
+.check-btn{width:22px;height:22px;border-radius:50%;border:1.5px solid #ddd;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.check-btn:hover{border-color:#1d9e75}
+.check-btn.checked{background:#1d9e75;border-color:#1d9e75}
+.check-btn svg{display:none}
+.check-btn.checked svg{display:block}
+.item-left{display:flex;align-items:center;gap:6px;min-width:0}
+.item-nome{font-size:13px;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-parcela{font-size:10px;color:#aaa;background:#f2f0eb;padding:1px 5px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+.tag-amor{font-size:10px;background:#f3ecfc;color:#7c3aed;padding:1px 6px;border-radius:8px;flex-shrink:0}
+.v-total{font-size:13px;font-weight:500;color:#1a1a1a;text-align:right}
+.v-total.struck{text-decoration:line-through;color:#bbb}
+.v-meu{font-size:13px;color:#185fa5;text-align:right}
+.v-amor{font-size:13px;color:#7c3aed;text-align:right}
+.row-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.btn-icon{background:#f2f0eb;border:none;cursor:pointer;padding:5px 7px;border-radius:6px;color:#888;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center}
+.btn-icon:hover{background:#e8e6e0;color:#1a1a1a}
+.btn-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.card-footer{display:flex;justify-content:space-between;align-items:center;padding-top:8px;margin-top:6px;border-top:1px solid rgba(0,0,0,0.07)}
+.footer-label{font-size:12px;color:#888}
+.add-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:#aaa;cursor:pointer;padding:6px 0;border:none;background:none;margin-top:4px;font-family:inherit}
+.add-btn:hover{color:#1a1a1a}
+.add-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:1.5rem;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.modal-title{font-size:15px;font-weight:500;margin-bottom:1rem;color:#1a1a1a}
+.field{margin-bottom:.75rem}
+.field label{font-size:12px;color:#888;display:block;margin-bottom:4px}
+.field input,.field select{width:100%;font-size:13px;padding:8px 10px;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;background:#fff;color:#1a1a1a;outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:rgba(0,0,0,0.35)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;gap:8px;margin-top:1rem;justify-content:flex-end}
+.btn-primary{background:#1a1a1a;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;font-family:inherit}
+.btn-primary:hover{background:#333}
+.btn-cancel{background:none;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;color:#888;font-family:inherit}
+.btn-cancel:hover{background:#f2f0eb}
+.receitas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:.75rem}
+.receita-item{background:#f5f4f0;border-radius:8px;padding:.6rem .85rem;position:relative}
+.receita-nome{font-size:11px;color:#888}
+.receita-valor{font-size:14px;font-weight:500;color:#1d9e75}
+.receita-del{position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;color:#ccc;padding:2px;display:flex;align-items:center}
+.receita-del:hover{color:#c0392b}
+.receita-del svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.mes-header{display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
+.mes-select{font-size:16px;font-weight:500;background:none;border:none;color:#1a1a1a;cursor:pointer;padding:0;font-family:inherit}
+.add-mes-btn{font-size:12px;padding:4px 10px;border:0.5px solid rgba(0,0,0,0.15);border-radius:6px;background:#fff;cursor:pointer;font-family:inherit}
+.status-save{font-size:11px;color:#bbb}
+.backup-area{display:flex;gap:6px;margin-left:auto;align-items:center}
+.btn-backup{display:flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:inherit;border:none;font-weight:500}
+.btn-export{background:#e8f4ee;color:#1d9e75}
+.btn-export:hover{background:#d4eddf}
+.btn-import{background:#eef2fc;color:#185fa5}
+.btn-import:hover{background:#dde6f9}
+.btn-backup svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:13px;padding:10px 18px;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="mes-header">
+    <select class="mes-select" id="mes-select" onchange="changeMes()"></select>
+    <button class="add-mes-btn" onclick="addMes()">+ Mês</button>
+    <span class="status-save" id="status-save"></span>
+    <div class="backup-area">
+      <button class="btn-backup btn-export" onclick="exportar()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar
+      </button>
+      <button class="btn-backup btn-import" onclick="document.getElementById('import-input').click()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Importar
+      </button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importar(event)">
+    </div>
+  </div>
+  <div id="metrics-container" class="metrics"></div>
+  <div id="sections-container"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="modal-overlay" class="modal-overlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Adicionar item</div>
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="f-nome" placeholder="Ex: Netflix">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Valor total (R$)</label>
+        <input type="number" id="f-valor" step="0.01" placeholder="0,00">
+      </div>
+      <div class="field">
+        <label>Parcela (ex: 2/12)</label>
+        <input type="text" id="f-parcela" placeholder="opcional">
+      </div>
+    </div>
+    <div class="field">
+      <label>De quem é?</label>
+      <select id="f-dono" onchange="donoChange()">
+        <option value="meu">Meu (100%)</option>
+        <option value="shared">Compartilhado (50/50)</option>
+        <option value="amor">Da Amor (100%)</option>
+      </select>
+    </div>
+    <div class="field" id="f-meu-wrap" style="display:none">
+      <label>Minha parte (R$)</label>
+      <input type="number" id="f-meu" step="0.01" placeholder="0,00">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveItem()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SECOES=['Geral','Santander','Nubank'];
+const STORAGE_KEY='minhas-contas-v1';
+const DEFAULT_DATA={
+  secoes:{
+    Geral:[
+      {id:1,nome:'Vivo',valor:194,meu:97,dono:'shared',parcela:null,pago:false},
+      {id:2,nome:'Aluguel',valor:760,meu:380,dono:'shared',parcela:null,pago:false},
+      {id:3,nome:'Mãe',valor:640,meu:640,dono:'meu',parcela:'12/12',pago:false},
+      {id:4,nome:'Carro',valor:550,meu:550,dono:'meu',parcela:'9/42',pago:false},
+      {id:5,nome:'Marcelo',valor:402.14,meu:402.14,dono:'meu',parcela:'6/9',pago:false},
+      {id:6,nome:'Psicólogo',valor:240,meu:240,dono:'meu',parcela:null,pago:false},
+      {id:7,nome:'Pai - Geladeira',valor:168,meu:168,dono:'meu',parcela:'1/6',pago:false},
+    ],
+    Santander:[
+      {id:8,nome:'YouTube',valor:26.90,meu:26.90,dono:'meu',parcela:null,pago:false},
+      {id:9,nome:'Spotify',valor:40.90,meu:40.90,dono:'meu',parcela:null,pago:false},
+      {id:10,nome:'Melu+ (ML)',valor:75,meu:75,dono:'meu',parcela:null,pago:false},
+      {id:11,nome:'TikTok',valor:55.08,meu:55.08,dono:'meu',parcela:'2/3',pago:false},
+      {id:12,nome:'Alargs',valor:56.34,meu:56.34,dono:'meu',parcela:'2/2',pago:false},
+      {id:13,nome:'Riachuelo',valor:75,meu:75,dono:'meu',parcela:'2/2',pago:false},
+      {id:14,nome:'Renner',valor:184.85,meu:184.85,dono:'meu',parcela:'2/2',pago:false},
+    ],
+    Nubank:[
+      {id:15,nome:'Laser',valor:75.55,meu:0,dono:'amor',parcela:'7/10',pago:false},
+      {id:16,nome:'Mercado Livre',valor:105.45,meu:105.45,dono:'meu',parcela:'3/4',pago:false},
+      {id:17,nome:'Mercado Livre',valor:41.20,meu:41.20,dono:'meu',parcela:'3/4',pago:false},
+      {id:18,nome:'Torra',valor:103.33,meu:103.33,dono:'meu',parcela:'3/3',pago:false},
+      {id:19,nome:'Renner',valor:88.55,meu:88.55,dono:'meu',parcela:'3/3',pago:false},
+      {id:20,nome:'Microondas',valor:188.61,meu:94.30,dono:'shared',parcela:'2/4',pago:false},
+      {id:21,nome:'Sympla',valor:60.89,meu:60.89,dono:'meu',parcela:'2/4',pago:false},
+      {id:22,nome:'Celular',valor:231,meu:0,dono:'amor',parcela:'1/10',pago:false},
+      {id:23,nome:'Boca',valor:200,meu:200,dono:'meu',parcela:'1/3',pago:false},
+      {id:24,nome:'Boca Rosa',valor:53,meu:53,dono:'meu',parcela:'1/3',pago:false},
+    ]
+  },
+  receitas:[
+    {id:1,nome:'Meia Hora',valor:3500},
+    {id:2,nome:'Dominique',valor:3500},
+    {id:3,nome:'Luciana',valor:500},
+    {id:4,nome:'Lana',valor:500},
+    {id:5,nome:'Bônus',valor:250},
+    {id:6,nome:'Meta',valor:400},
+  ],
+  reserva:200
+};
+
+const SVG_EDIT=`<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const SVG_TRASH=`<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+const SVG_PLUS=`<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+const SVG_X=`<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+const SVG_CHECK=`<svg viewBox="0 0 24 24" width="11" height="11" stroke="#fff" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+let state={meses:{},mesAtual:''};
+let modalMode='',modalSec='',editTarget=null,nextId=200;
+const fmt=v=>'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const mesLabel=k=>{const[y,m]=k.split('-');const n=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return n[parseInt(m)-1]+'/'+y.slice(2);};
+
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+function exportar(){
+  const data=JSON.stringify(state,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const hoje=new Date();
+  const nome=`minhas-contas-backup-${hoje.getFullYear()}${String(hoje.getMonth()+1).padStart(2,'0')}${String(hoje.getDate()).padStart(2,'0')}.json`;
+  a.href=url;a.download=nome;a.click();
+  URL.revokeObjectURL(url);
+  toast('Backup exportado!');
+}
+
+function importar(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(!imported.meses||!imported.mesAtual)throw new Error('Arquivo inválido');
+      if(!confirm('Isso vai substituir todos os dados atuais. Confirma?')){event.target.value='';return;}
+      state=imported;
+      const ids=Object.values(state.meses).flatMap(m=>Object.values(m.secoes).flat().map(i=>i.id).concat(m.receitas.map(r=>r.id)));
+      nextId=Math.max(nextId,...ids.filter(Number.isFinite))+1;
+      save();renderMesSelect();render();
+      toast('Dados importados com sucesso!');
+    }catch(err){
+      toast('Arquivo inválido. Use um backup exportado pelo app.');
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function avancaParcela(p){
+  if(!p)return p;
+  const m=p.match(/^(\d+)\/(\d+)$/);
+  if(!m)return p;
+  const a=parseInt(m[1]),t=parseInt(m[2]);
+  if(a>=t)return null;
+  return(a+1)+'/'+t;
+}
+
+function load(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      state=JSON.parse(raw);
+      const ids=Object.values(state.meses).flatMap(m=>Object.values(m.secoes).flat().map(i=>i.id).concat(m.receitas.map(r=>r.id)));
+      nextId=Math.max(nextId,...ids.filter(Number.isFinite))+1;
+    }else{
+      state.meses['2026-07']=JSON.parse(JSON.stringify(DEFAULT_DATA));
+      state.mesAtual='2026-07';
+    }
+  }catch(e){
+    state.meses['2026-07']=JSON.parse(JSON.stringify(DEFAULT_DATA));
+    state.mesAtual='2026-07';
+  }
+  renderMesSelect();render();
+}
+
+function save(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    const el=document.getElementById('status-save');
+    el.textContent='salvo';setTimeout(()=>el.textContent='',2000);
+  }catch(e){}
+}
+
+function getMes(){return state.meses[state.mesAtual];}
+
+function renderMesSelect(){
+  const sel=document.getElementById('mes-select');
+  const keys=Object.keys(state.meses).sort();
+  sel.innerHTML=keys.map(k=>`<option value="${k}"${k===state.mesAtual?' selected':''}>${mesLabel(k)}</option>`).join('');
+}
+
+function changeMes(){state.mesAtual=document.getElementById('mes-select').value;render();}
+
+function addMes(){
+  const keys=Object.keys(state.meses).sort();
+  const last=keys[keys.length-1];
+  const[y,m]=last.split('-').map(Number);
+  const nd=new Date(y,m,1);
+  const nk=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0');
+  if(state.meses[nk]){state.mesAtual=nk;renderMesSelect();render();return;}
+  const prev=JSON.parse(JSON.stringify(state.meses[last]));
+  const novoSecoes={};
+  SECOES.forEach(sec=>{
+    novoSecoes[sec]=(prev.secoes[sec]||[]).map(item=>{
+      if(!item.parcela)return{...item,pago:false};
+      const np=avancaParcela(item.parcela);
+      if(np===null)return null;
+      return{...item,parcela:np,pago:false};
+    }).filter(Boolean);
+  });
+  state.meses[nk]={secoes:novoSecoes,receitas:JSON.parse(JSON.stringify(prev.receitas)),reserva:prev.reserva};
+  state.mesAtual=nk;
+  renderMesSelect();render();save();
+}
+
+const calcMeu=items=>items.reduce((s,i)=>s+(i.dono==='amor'?0:i.meu),0);
+const calcAmor=items=>items.reduce((s,i)=>{if(i.dono==='amor')return s+i.valor;if(i.dono==='shared')return s+(i.valor-i.meu);return s;},0);
+
+function togglePago(sec,id){
+  const mes=getMes();
+  const item=mes.secoes[sec].find(i=>i.id===id);
+  if(item)item.pago=!item.pago;
+  render();save();
+}
+
+function render(){
+  const mes=getMes();
+  const totalMeu=SECOES.reduce((s,sec)=>s+calcMeu(mes.secoes[sec]||[]),0);
+  const totalAmor=SECOES.reduce((s,sec)=>s+calcAmor(mes.secoes[sec]||[]),0);
+  const totalReceitas=mes.receitas.reduce((s,r)=>s+r.valor,0);
+  const saldo=totalReceitas-totalMeu-mes.reserva;
+  const pct=Math.min(100,totalReceitas>0?(totalMeu/totalReceitas)*100:0);
+  const totalPago=SECOES.reduce((s,sec)=>s+calcMeu((mes.secoes[sec]||[]).filter(i=>i.pago)),0);
+  const totalPendente=totalMeu-totalPago;
+
+  document.getElementById('metrics-container').innerHTML=`
+    <div class="metric"><div class="metric-label">Total gasto (meu)</div><div class="metric-value mv-danger">${fmt(totalMeu)}</div></div>
+    <div class="metric"><div class="metric-label">Parte da Amor</div><div class="metric-value mv-amor">${fmt(totalAmor)}</div></div>
+    <div class="metric"><div class="metric-label">Pago</div><div class="metric-value mv-success">${fmt(totalPago)}</div></div>
+    <div class="metric"><div class="metric-label">Pendente</div><div class="metric-value" style="color:${totalPendente>0?'#c0392b':'#1d9e75'}">${fmt(totalPendente)}</div></div>
+    <div class="metric"><div class="metric-label">A receber</div><div class="metric-value mv-success">${fmt(totalReceitas)}</div></div>
+    <div class="metric"><div class="metric-label">Saldo final</div><div class="metric-value ${saldo>=0?'mv-success':'mv-danger'}">${fmt(saldo)}</div><div class="saldo-bar"><div class="saldo-fill${saldo<0?' over':''}" style="width:${pct.toFixed(1)}%"></div></div></div>`;
+
+  let html='';
+  SECOES.forEach(sec=>{
+    const items=mes.secoes[sec]||[];
+    const meu=calcMeu(items),amor=calcAmor(items);
+    html+=`<div class="card">
+      <div class="card-header">
+        <span class="card-title">${sec}</span>
+        <div class="card-totals"><span style="color:#185fa5">Meu: ${fmt(meu)}</span>${amor>0?`<span style="color:#7c3aed">Amor: ${fmt(amor)}</span>`:''}</div>
+      </div>
+      <div class="col-headers">
+        <span class="col-h"></span>
+        <span class="col-h" style="text-align:left">Item</span>
+        <span class="col-h">Total</span>
+        <span class="col-h" style="color:#185fa5">Meu</span>
+        <span class="col-h" style="color:#7c3aed">Amor</span>
+        <span class="col-h"></span>
+      </div>`;
+    items.forEach(item=>{
+      const amorPart=item.dono==='amor'?item.valor:(item.dono==='shared'?item.valor-item.meu:0);
+      const meuPart=item.dono==='amor'?0:item.meu;
+      html+=`<div class="item-row${item.pago?' pago':''}">
+        <button class="check-btn${item.pago?' checked':''}" onclick="togglePago('${sec}',${item.id})" title="${item.pago?'Desmarcar':'Marcar como pago'}">${SVG_CHECK}</button>
+        <div class="item-left">
+          ${item.dono==='amor'?'<span class="tag-amor">Amor</span>':''}
+          <span class="item-nome">${item.nome}</span>
+          ${item.parcela?`<span class="item-parcela">${item.parcela}</span>`:''}
+        </div>
+        <div class="v-total${item.dono!=='meu'?' struck':''}">${fmt(item.valor)}</div>
+        <div class="v-meu">${item.dono==='amor'?'—':fmt(meuPart)}</div>
+        <div class="v-amor">${amorPart>0?fmt(amorPart):''}</div>
+        <div class="row-actions">
+          <button class="btn-icon" onclick="editItem('${sec}',${item.id})" title="Editar">${SVG_EDIT}</button>
+          <button class="btn-icon" onclick="deleteItem('${sec}',${item.id})" title="Excluir">${SVG_TRASH}</button>
+        </div>
+      </div>`;
+    });
+    html+=`<button class="add-btn" onclick="openModal('${sec}')">${SVG_PLUS} adicionar item</button></div>`;
+  });
+
+  html+=`<div class="card">
+    <div class="card-header"><span class="card-title">A Receber</span><span style="font-size:15px;font-weight:500;color:#1d9e75">${fmt(totalReceitas)}</span></div>
+    <div class="receitas-grid">`;
+  mes.receitas.forEach(r=>{
+    html+=`<div class="receita-item">
+      <button class="receita-del" onclick="deleteReceita(${r.id})" title="Remover">${SVG_X}</button>
+      <div class="receita-nome">${r.nome}</div>
+      <div class="receita-valor">${fmt(r.valor)}</div>
+    </div>`;
+  });
+  html+=`</div>
+    <button class="add-btn" onclick="openModalReceita()">${SVG_PLUS} adicionar receita</button>
+    <div class="card-footer">
+      <span class="footer-label">Reserva mensal</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px;color:#888">R$</span>
+        <input type="number" value="${mes.reserva}" step="50" style="width:80px;text-align:right;font-size:13px;padding:4px 8px;border:0.5px solid rgba(0,0,0,0.15);border-radius:6px;font-family:inherit" onchange="updateReserva(this.value)">
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('sections-container').innerHTML=html;
+}
+
+function donoChange(){
+  const v=document.getElementById('f-dono').value;
+  document.getElementById('f-meu-wrap').style.display=v==='shared'?'block':'none';
+  if(v!=='shared'){const val=parseFloat(document.getElementById('f-valor').value)||0;document.getElementById('f-meu').value=v==='meu'?val:0;}
+}
+
+function openModal(sec,itemId=null){
+  modalMode=itemId?'edit-item':'add-item';modalSec=sec;editTarget=itemId;
+  document.getElementById('modal-title').textContent=itemId?'Editar item':'Adicionar item em '+sec;
+  document.getElementById('f-nome').value='';document.getElementById('f-valor').value='';
+  document.getElementById('f-parcela').value='';document.getElementById('f-dono').value='meu';
+  document.getElementById('f-meu-wrap').style.display='none';document.getElementById('f-meu').value='';
+  if(itemId){
+    const item=getMes().secoes[sec].find(i=>i.id===itemId);
+    if(item){
+      document.getElementById('f-nome').value=item.nome;document.getElementById('f-valor').value=item.valor;
+      document.getElementById('f-parcela').value=item.parcela||'';document.getElementById('f-dono').value=item.dono;
+      if(item.dono==='shared'){document.getElementById('f-meu-wrap').style.display='block';document.getElementById('f-meu').value=item.meu;}
+    }
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-nome').focus(),50);
+}
+
+function openModalReceita(){
+  modalMode='add-receita';
+  document.getElementById('modal-title').textContent='Adicionar receita';
+  document.getElementById('f-nome').value='';document.getElementById('f-valor').value='';
+  document.getElementById('f-parcela').value='';document.getElementById('f-dono').value='meu';
+  document.getElementById('f-meu-wrap').style.display='none';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-nome').focus(),50);
+}
+
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function overlayClick(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
+
+function saveItem(){
+  const nome=document.getElementById('f-nome').value.trim();
+  const valor=parseFloat(document.getElementById('f-valor').value)||0;
+  const parcela=document.getElementById('f-parcela').value.trim()||null;
+  const dono=document.getElementById('f-dono').value;
+  const meu=dono==='meu'?valor:(dono==='amor'?0:parseFloat(document.getElementById('f-meu').value)||0);
+  if(!nome||valor<=0)return;
+  const mes=getMes();
+  if(modalMode==='add-receita'){
+    mes.receitas.push({id:nextId++,nome,valor});
+  }else if(modalMode==='add-item'){
+    if(!mes.secoes[modalSec])mes.secoes[modalSec]=[];
+    mes.secoes[modalSec].push({id:nextId++,nome,valor,meu,dono,parcela,pago:false});
+  }else if(modalMode==='edit-item'){
+    const idx=mes.secoes[modalSec].findIndex(i=>i.id===editTarget);
+    if(idx>=0)mes.secoes[modalSec][idx]={...mes.secoes[modalSec][idx],nome,valor,meu,dono,parcela};
+  }
+  closeModal();render();save();
+}
+
+function editItem(sec,id){openModal(sec,id);}
+function deleteItem(sec,id){if(!confirm('Excluir este item?'))return;const mes=getMes();mes.secoes[sec]=mes.secoes[sec].filter(i=>i.id!==id);render();save();}
+function deleteReceita(id){const mes=getMes();mes.receitas=mes.receitas.filter(r=>r.id!==id);render();save();}
+function updateReserva(v){getMes().reserva=parseFloat(v)||0;render();save();}
+
+load();
+</script>
+</body>
+</html>
